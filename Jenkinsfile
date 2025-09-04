@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER_BFLASK_IMAGE = 'janeesha/my-flask-app:latest'
+        DOCKER_REGISTRY_CREDS = 'docker-jenkins-token-1'
+    }
+
     stages {
         stage('Build') {
             steps {
