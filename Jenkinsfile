@@ -1,9 +1,14 @@
 pipeline {
     agent {
         node {
-            label 'built-in'
+            label 'built-in'   // Run on your Mac Jenkins node
             customWorkspace "/Users/janeeshawishmika/.jenkins/workspace/${JOB_NAME}"
         }
+    }
+
+    options {
+        disableConcurrentBuilds()   // Prevents Jenkins from making @2, @3 folders
+        durabilityHint 'PERFORMANCE_OPTIMIZED' // Avoids tmp script issues
     }
 
     environment {
@@ -12,6 +17,12 @@ pipeline {
     }
 
     stages {
+        stage('Clean') {
+            steps {
+                deleteDir()   // Clean old workspace files
+            }
+        }
+
         stage('Build') {
             steps {
                 sh 'docker build -t $DOCKER_BFLASK_IMAGE .'
