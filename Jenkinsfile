@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        node {
+            label 'any'
+            customWorkspace "/Users/janeeshawishmika/.jenkins/workspace/${JOB_NAME}"
+        }
+    }
 
     environment {
         DOCKER_BFLASK_IMAGE = 'janeesha/my-flask-app:latest'
@@ -42,5 +47,3 @@ pipeline {
         }
     }
 }
-
-
