@@ -1,15 +1,9 @@
 pipeline {
-    agent {
-        node {
-            // ⚠️ Replace 'built-in' with the actual label from your Jenkins node config
-            label 'built-in'  
-            customWorkspace "/Users/janeeshawishmika/.jenkins/workspace/${JOB_NAME}"
-        }
-    }
+    agent { label 'built-in' }
 
     options {
         disableConcurrentBuilds()
-        durabilityHint 'PERFORMANCE_OPTIMIZED'
+        skipDefaultCheckout()
     }
 
     environment {
@@ -18,50 +12,41 @@ pipeline {
     }
 
     stages {
-        stage('Debug') {
+        stage('Checkout') {
             steps {
-                sh 'pwd'
-                sh 'ls -la'
-            }
-        }
-
-        stage('Clean') {
-            steps {
-                deleteDir()
+                dir("/Users/janeeshawishmika/.jenkins/workspace/${JOB_NAME}") {
+                    checkout scm
+                }
             }
         }
 
         stage('Build') {
             steps {
-                script {
-                    sh '''#!/bin/bash
-                    docker build -t $DOCKER_BFLASK_IMAGE .
-                    '''
+                dir("/Users/janeeshawishmika/.jenkins/workspace/${JOB_NAME}") {
+                    sh 'docker build -t $DOCKER_BFLASK_IMAGE .'
                 }
             }
         }
 
         stage('Test') {
             steps {
-                script {
-                    sh '''#!/bin/bash
-                    docker run --rm $DOCKER_BFLASK_IMAGE python -m pytest app/tests/
-                    '''
+                dir("/Users/janeeshawishmika/.jenkins/workspace/${JOB_NAME}") {
+                    sh 'docker run --rm $DOCKER_BFLASK_IMAGE python -m pytest app/tests/'
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: "${DOCKER_REGISTRY_CREDS}",
-                    passwordVariable: 'DOCKER_PASSWORD',
-                    usernameVariable: 'DOCKER_USERNAME'
-                )]) {
-                    script {
-                        sh '''#!/bin/bash
-                        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-                        docker push $DOCKER_BFLASK_IMAGE
+                dir("/Users/janeeshawishmika/.jenkins/workspace/${JOB_NAME}") {
+                    withCredentials([usernamePassword(
+                        credentialsId: "${DOCKER_REGISTRY_CREDS}",
+                        passwordVariable: 'DOCKER_PASSWORD',
+                        usernameVariable: 'DOCKER_USERNAME'
+                    )]) {
+                        sh '''
+                            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                            docker push $DOCKER_BFLASK_IMAGE
                         '''
                     }
                 }
