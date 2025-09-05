@@ -1,14 +1,15 @@
 pipeline {
     agent {
         node {
-            label 'built-in'   // Run on your Mac Jenkins node
+            // ⚠️ Replace 'built-in' with the actual label from your Jenkins node config
+            label 'built-in'  
             customWorkspace "/Users/janeeshawishmika/.jenkins/workspace/${JOB_NAME}"
         }
     }
 
     options {
-        disableConcurrentBuilds()   // Prevents Jenkins from making @2, @3 folders
-        durabilityHint 'PERFORMANCE_OPTIMIZED' // Avoids tmp script issues
+        disableConcurrentBuilds()
+        durabilityHint 'PERFORMANCE_OPTIMIZED'
     }
 
     environment {
@@ -17,21 +18,36 @@ pipeline {
     }
 
     stages {
+        stage('Debug') {
+            steps {
+                sh 'pwd'
+                sh 'ls -la'
+            }
+        }
+
         stage('Clean') {
             steps {
-                deleteDir()   // Clean old workspace files
+                deleteDir()
             }
         }
 
         stage('Build') {
             steps {
-                sh 'docker build -t $DOCKER_BFLASK_IMAGE .'
+                script {
+                    sh '''#!/bin/bash
+                    docker build -t $DOCKER_BFLASK_IMAGE .
+                    '''
+                }
             }
         }
 
         stage('Test') {
             steps {
-                sh 'docker run --rm $DOCKER_BFLASK_IMAGE python -m pytest app/tests/'
+                script {
+                    sh '''#!/bin/bash
+                    docker run --rm $DOCKER_BFLASK_IMAGE python -m pytest app/tests/
+                    '''
+                }
             }
         }
 
@@ -42,10 +58,12 @@ pipeline {
                     passwordVariable: 'DOCKER_PASSWORD',
                     usernameVariable: 'DOCKER_USERNAME'
                 )]) {
-                    sh """
-                        echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin
+                    script {
+                        sh '''#!/bin/bash
+                        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
                         docker push $DOCKER_BFLASK_IMAGE
-                    """
+                        '''
+                    }
                 }
             }
         }
