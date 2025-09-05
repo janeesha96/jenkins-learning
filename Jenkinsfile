@@ -9,14 +9,13 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh 'docker build -t my-flask-app .'
-                sh 'docker tag my-flask-app $DOCKER_BFLASK_IMAGE'
+                sh 'docker build -t $DOCKER_BFLASK_IMAGE .'
             }
         }
 
         stage('Test') {
             steps {
-                sh 'docker run my-flask-app python -m pytest app/tests/'
+                sh 'docker run --rm $DOCKER_BFLASK_IMAGE python -m pytest app/tests/'
             }
         }
 
@@ -28,7 +27,7 @@ pipeline {
                     usernameVariable: 'DOCKER_USERNAME'
                 )]) {
                     sh """
-                        echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin docker.io
+                        echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin
                         docker push $DOCKER_BFLASK_IMAGE
                     """
                 }
@@ -38,8 +37,10 @@ pipeline {
 
     post {
         always {
-            sh 'docker logout'
+            sh 'docker logout || true'
+            sh 'docker system prune -f || true'
         }
     }
 }
+
 
