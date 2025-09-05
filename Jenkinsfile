@@ -1,7 +1,7 @@
 pipeline {
     agent {
         node {
-            label 'any'
+            label 'built-in'
             customWorkspace "/Users/janeeshawishmika/.jenkins/workspace/${JOB_NAME}"
         }
     }
