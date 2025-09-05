@@ -23,7 +23,12 @@ pipeline {
         stage('Build') {
             steps {
                 dir("/Users/janeeshawishmika/.jenkins/workspace/${JOB_NAME}") {
-                    sh 'docker build -t $DOCKER_BFLASK_IMAGE .'
+                    script {
+                        sh '''#!/bin/bash
+                        set -e
+                        docker build -t $DOCKER_BFLASK_IMAGE .
+                        '''
+                    }
                 }
             }
         }
@@ -31,7 +36,12 @@ pipeline {
         stage('Test') {
             steps {
                 dir("/Users/janeeshawishmika/.jenkins/workspace/${JOB_NAME}") {
-                    sh 'docker run --rm $DOCKER_BFLASK_IMAGE python -m pytest app/tests/'
+                    script {
+                        sh '''#!/bin/bash
+                        set -e
+                        docker run --rm $DOCKER_BFLASK_IMAGE python -m pytest app/tests/
+                        '''
+                    }
                 }
             }
         }
@@ -44,10 +54,13 @@ pipeline {
                         passwordVariable: 'DOCKER_PASSWORD',
                         usernameVariable: 'DOCKER_USERNAME'
                     )]) {
-                        sh '''
+                        script {
+                            sh '''#!/bin/bash
+                            set -e
                             echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
                             docker push $DOCKER_BFLASK_IMAGE
-                        '''
+                            '''
+                        }
                     }
                 }
             }
@@ -56,8 +69,10 @@ pipeline {
 
     post {
         always {
-            sh 'docker logout || true'
-            sh 'docker system prune -f || true'
+            sh '''#!/bin/bash
+            docker logout || true
+            docker system prune -f || true
+            '''
         }
     }
 }
